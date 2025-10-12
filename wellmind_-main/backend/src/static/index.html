@@ -1,0 +1,443 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Well Mind - الصحة النفسية</title>
+    <script type="module" crossorigin src="/assets/index-CGsbAMLv.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-hEQoSUH4.css">
+  </head>
+  <body>
+    <div id="root"></div>
+
+    <!-- Chatbot -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <div class="chatbot-container">
+      <button class="chat-button" onclick="toggleChat()">
+        <i class="fas fa-comments"></i> Mind Helper
+      </button>
+
+      <div class="chat-window" id="chatWindow">
+        <div class="chat-header">
+          <button class="close-btn" onclick="toggleChat()">×</button>
+          <h3>Well Mind Assistant</h3>
+          <p>Your friendly mental health companion</p>
+          <div class="creator-badge">By Basel Hossam</div>
+        </div>
+
+        <div class="chat-messages" id="chatMessages">
+          <div class="message bot-message">
+            <p><strong>Hey there! I'm MindHelper 👋</strong></p>
+            <p>I'm your friendly assistant from Well Mind, created by Basel to support your mental health journey.</p>
+            <p>How are you feeling today?</p>
+
+            <div class="quick-actions">
+              <button class="quick-btn" onclick="quickAction('anxiety')">😰 Feeling Anxious</button>
+              <button class="quick-btn" onclick="quickAction('stress')">😫 Too Stressed</button>
+              <button class="quick-btn" onclick="quickAction('therapy')">👥 Talk to a Pro</button>
+              <button class="quick-btn" onclick="quickAction('resources')">📚 Get Resources</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="chat-input-area">
+          <input type="text" class="chat-input" id="userInput" placeholder="Tell me what's on your mind..." onkeypress="handleKeyPress(event)">
+          <button class="send-btn" onclick="sendMessage()">
+            <i class="fas fa-paper-plane"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Configuration
+      const API_KEY = 'AIzaSyDGHdx5RMA8gHl79nwhu5YNHnt8va2soi8';
+      const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${API_KEY}`;
+
+      // System prompt
+      const systemPrompt = `You are MindHelper, the AI assistant for Well Mind - created by Basel Hossam Alshawqery to support mental wellness journeys.
+
+🌟 WEBSITE FEATURES:
+• Mood Tracker - Daily emotional check-ins with smart AI recommendations based on mood levels and personal notes
+• Therapy Sessions - Book sessions with top mental health professionals specializing in anxiety, depression, relationships, trauma recovery
+• Mental Health Library - Curated articles from trusted sources covering anxiety, depression, sleep, meditation, work stress, and self-development
+• Wellness Podcasts - Expert-led episodes on stress management, confidence building, healthy relationships, and overcoming challenges
+• Professional Assessments - Certified psychological tests including PHQ-9 Depression Scale, GAD-7 Anxiety Scale, Stress Assessment, and Sleep Quality Index
+
+🎯 YOUR ROLE & MISSION:
+→ Provide compassionate mental health support and active listening
+→ Be the warm, knowledgeable friend who always knows the right resource
+→ Guide users to perfect website features that match their needs
+→ Suggest relevant tools when they can help the user's situation
+→ Encourage professional care while offering immediate support
+→ Never diagnose conditions - always recommend consulting qualified professionals
+→ Help users navigate website features effectively
+
+💫 COMMUNICATION STYLE:
+Warm • Encouraging • Professional • Empathetic • Supportive • Informative
+
+PERFECT RESPONSE EXAMPLES:
+"Hey there! 👋 I'm here to listen and help you find the right support. What's on your mind today?"
+"That sounds really challenging 💙 Our mood tracker could help you spot patterns and get personalized insights!"
+"Professional support makes such a difference! We have amazing psychologists ready to help you 🩺"
+"I understand how that feels. Our articles on [specific topic] might give you some helpful strategies!"
+"That's a great step toward self-awareness! Our assessments can help you understand yourself better 📊"
+
+KEY PRINCIPLES:
+• Always be warm and empathetic in every interaction
+• Use simple, encouraging language that makes users feel heard
+• Ask open-ended questions to understand user needs deeply
+• Offer specific suggestions from our website features
+• Empower users with information and clear next steps
+• Maintain professional boundaries while being genuinely caring`;
+
+      let isChatOpen = false;
+
+      function toggleChat() {
+        const chatWindow = document.getElementById('chatWindow');
+        isChatOpen = !isChatOpen;
+
+        if (isChatOpen) {
+          chatWindow.style.display = 'flex';
+        } else {
+          chatWindow.style.display = 'none';
+        }
+      }
+
+      function handleKeyPress(event) {
+        if (event.key === 'Enter') {
+          sendMessage();
+        }
+      }
+
+      function quickAction(topic) {
+        const messages = {
+          'anxiety': "I've been feeling really anxious lately",
+          'stress': "I'm dealing with a lot of stress",
+          'therapy': "Tell me about therapy sessions",
+          'resources': "What mental health resources do you have?"
+        };
+
+        document.getElementById('userInput').value = messages[topic];
+        sendMessage();
+      }
+
+      async function sendMessage() {
+        const userInput = document.getElementById('userInput');
+        const chatMessages = document.getElementById('chatMessages');
+        const message = userInput.value.trim();
+
+        if (!message) return;
+
+        // Add user message
+        addMessage(message, 'user');
+        userInput.value = '';
+
+        // Show typing indicator
+        showTypingIndicator();
+
+        try {
+          const response = await fetch(API_URL, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              contents: [{
+                parts: [{
+                  text: systemPrompt + "\n\nUser: " + message + "\n\nPlease respond in a warm, friendly way:"
+                }]
+              }],
+              generationConfig: {
+                temperature: 0.8,
+                maxOutputTokens: 500,
+              }
+            })
+          });
+
+          const data = await response.json();
+          hideTypingIndicator();
+
+          if (data.candidates && data.candidates[0].content.parts[0].text) {
+            const botResponse = data.candidates[0].content.parts[0].text;
+            addMessage(botResponse, 'bot');
+          } else {
+            throw new Error('No response from AI');
+          }
+
+        } catch (error) {
+          console.error('Error:', error);
+          hideTypingIndicator();
+          addMessage("I'm here to help! You can explore our mood tracker or therapy sessions. What's on your mind today? 💙", 'bot');
+        }
+      }
+
+      function addMessage(content, type) {
+        const chatMessages = document.getElementById('chatMessages');
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message ${type}-message`;
+
+        if (type === 'user') {
+          messageDiv.textContent = content;
+        } else {
+          messageDiv.innerHTML = content.replace(/\n/g, '<br>');
+        }
+
+        chatMessages.appendChild(messageDiv);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+      }
+
+      function showTypingIndicator() {
+        const chatMessages = document.getElementById('chatMessages');
+        const typingDiv = document.createElement('div');
+        typingDiv.className = 'typing-indicator';
+        typingDiv.id = 'typingIndicator';
+        typingDiv.innerHTML = `
+          <div class="typing-dot"></div>
+          <div class="typing-dot"></div>
+          <div class="typing-dot"></div>
+        `;
+        chatMessages.appendChild(typingDiv);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+      }
+
+      function hideTypingIndicator() {
+        const typingIndicator = document.getElementById('typingIndicator');
+        if (typingIndicator) {
+          typingIndicator.remove();
+        }
+      }
+
+      // Auto-open chat after 3 seconds
+      setTimeout(() => {
+        if (!localStorage.getItem('chat_opened')) {
+          toggleChat();
+          localStorage.setItem('chat_opened', 'true');
+        }
+      }, 3000);
+    </script>
+
+    <style>
+      .chatbot-container {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        z-index: 1000;
+      }
+
+      .chat-button {
+        background: linear-gradient(135deg, #5c6bc0 0%, #8e24aa 100%);
+        color: white;
+        border: none;
+        border-radius: 50px;
+        padding: 18px 28px;
+        font-size: 17px;
+        font-weight: 600;
+        cursor: pointer;
+        box-shadow: 0 8px 25px rgba(92, 107, 192, 0.4);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        transition: all 0.3s ease;
+      }
+
+      .chat-button:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 12px 30px rgba(92, 107, 192, 0.5);
+      }
+
+      .chat-window {
+        position: absolute;
+        bottom: 80px;
+        right: 0;
+        width: 380px;
+        height: 550px;
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+        display: none;
+        flex-direction: column;
+        overflow: hidden;
+        animation: slideUp 0.3s ease;
+      }
+
+      @keyframes slideUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+
+      .chat-header {
+        background: linear-gradient(135deg, #5c6bc0 0%, #8e24aa 100%);
+        color: white;
+        padding: 22px;
+        text-align: center;
+        position: relative;
+      }
+
+      .chat-header h3 {
+        font-size: 1.4rem;
+        margin-bottom: 5px;
+      }
+
+      .chat-header p {
+        font-size: 0.9rem;
+        opacity: 0.9;
+      }
+
+      .creator-badge {
+        background: rgba(255,255,255,0.2);
+        padding: 4px 12px;
+        border-radius: 15px;
+        font-size: 0.8rem;
+        margin-top: 8px;
+        display: inline-block;
+      }
+
+      .close-btn {
+        position: absolute;
+        right: 18px;
+        top: 18px;
+        background: rgba(255,255,255,0.2);
+        border: none;
+        color: white;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        cursor: pointer;
+        font-size: 18px;
+        transition: all 0.2s ease;
+      }
+
+      .close-btn:hover {
+        background: rgba(255,255,255,0.3);
+      }
+
+      .chat-messages {
+        flex: 1;
+        padding: 20px;
+        overflow-y: auto;
+        background: #f8f9fa;
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+      }
+
+      .message {
+        max-width: 85%;
+        padding: 14px 18px;
+        border-radius: 18px;
+        line-height: 1.5;
+        animation: fadeIn 0.4s ease-out;
+      }
+
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+
+      .user-message {
+        background: #5c6bc0;
+        color: white;
+        align-self: flex-end;
+        border-bottom-right-radius: 5px;
+      }
+
+      .bot-message {
+        background: white;
+        color: #374151;
+        align-self: flex-start;
+        border-bottom-left-radius: 5px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+      }
+
+      .chat-input-area {
+        padding: 18px;
+        background: white;
+        border-top: 1px solid #e5e7eb;
+        display: flex;
+        gap: 12px;
+      }
+
+      .chat-input {
+        flex: 1;
+        padding: 14px 18px;
+        border: 1px solid #e5e7eb;
+        border-radius: 25px;
+        outline: none;
+        font-size: 0.95rem;
+        transition: all 0.3s ease;
+      }
+
+      .chat-input:focus {
+        border-color: #5c6bc0;
+        box-shadow: 0 0 0 2px rgba(92, 107, 192, 0.1);
+      }
+
+      .send-btn {
+        background: #5c6bc0;
+        color: white;
+        border: none;
+        padding: 14px 22px;
+        border-radius: 25px;
+        cursor: pointer;
+        font-weight: 600;
+        transition: all 0.3s ease;
+      }
+
+      .send-btn:hover {
+        background: #3f51b5;
+        transform: scale(1.05);
+      }
+
+      .quick-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 12px;
+      }
+
+      .quick-btn {
+        background: rgba(92, 107, 192, 0.1);
+        color: #5c6bc0;
+        border: 1px solid rgba(92, 107, 192, 0.3);
+        padding: 8px 14px;
+        border-radius: 16px;
+        cursor: pointer;
+        font-size: 0.85rem;
+        transition: all 0.3s ease;
+      }
+
+      .quick-btn:hover {
+        background: #5c6bc0;
+        color: white;
+      }
+
+      .typing-indicator {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 14px 18px;
+        background: white;
+        border-radius: 18px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+      }
+
+      .typing-dot {
+        width: 9px;
+        height: 9px;
+        background: #5c6bc0;
+        border-radius: 50%;
+        animation: typingBounce 1.4s infinite;
+      }
+
+      .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+      .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+      @keyframes typingBounce {
+        0%, 60%, 100% { transform: translateY(0); }
+        30% { transform: translateY(-6px); }
+      }
+    </style>
+  </body>
+</html>
