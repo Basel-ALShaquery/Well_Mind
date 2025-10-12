@@ -23,7 +23,7 @@ const Chatbot = () => {
   const [userInput, setUserInput] = useState('')
   const [isTyping, setIsTyping] = useState(false)
 
-  const API_KEY = 'AIzaSyDGHdx5RMA8gHl79nwhu5YNHnt8va2soi8'
+  const API_KEY = process.env.REACT_APP_GOOGLE_API_KEY
   const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${API_KEY}`
 
   const systemPrompt = `You are MindHelper, the friendly AI assistant for Well Mind website created by Basel Hossam Alshawqery.
