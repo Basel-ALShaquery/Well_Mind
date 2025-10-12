@@ -62,7 +62,9 @@ def create_app(testing: bool = False, database_uri: str | None = None) -> Flask:
                 content = f.read()
 
             # Inject API key as JavaScript variable
-            api_key = os.getenv('GOOGLE_API_KEY', 'AIzaSyDGHdx5RMA8gHl79nwhu5YNHnt8va2soi8')
+            api_key = os.getenv('GOOGLE_API_KEY')
+            if not api_key:
+                raise ValueError("GOOGLE_API_KEY environment variable is required")
             content = content.replace(
                 "const API_KEY = window.API_KEY || 'fallback-key';",
                 f"const API_KEY = '{api_key}';"
