@@ -49,14 +49,27 @@ def create_app(testing: bool = False, database_uri: str | None = None) -> Flask:
         from src.models import mood as _mood  # noqa: F401
         db.create_all()
 
-    # Serve frontend
+    # Serve frontend with API key replacement
     @app.route('/', defaults={'path': ''})
     @app.route('/<path:path>')
     def serve(path):
         if path != '' and os.path.exists(os.path.join(DIST_PATH, path)):
             return send_from_directory(DIST_PATH, path)
         else:
-            return send_from_directory(DIST_PATH, 'index.html')
+            # Read index.html and replace API key placeholder
+            index_path = os.path.join(DIST_PATH, 'index.html')
+            with open(index_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+
+            # Inject API key as JavaScript variable
+            api_key = os.getenv('GOOGLE_API_KEY', 'AIzaSyDGHdx5RMA8gHl79nwhu5YNHnt8va2soi8')
+            content = content.replace(
+                "const API_KEY = window.API_KEY || 'fallback-key';",
+                f"const API_KEY = '{api_key}';"
+            )
+
+            from flask import Response
+            return Response(content, mimetype='text/html')
 
     return app
 

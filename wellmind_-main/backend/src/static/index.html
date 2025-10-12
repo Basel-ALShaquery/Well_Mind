@@ -52,7 +52,7 @@
 
     <script>
       // Configuration
-      const API_KEY = 'AIzaSyDGHdx5RMA8gHl79nwhu5YNHnt8va2soi8';
+      const API_KEY = window.API_KEY || 'fallback-key'; // Will be injected by backend
       const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${API_KEY}`;
 
       // System prompt
