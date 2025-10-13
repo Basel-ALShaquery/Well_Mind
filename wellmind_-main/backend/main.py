@@ -1,13 +1,22 @@
 import os
-from dotenv import load_dotenv
 from flask import Flask, send_from_directory
 from flask_cors import CORS
 from src.extensions import db
 from src.routes.user import user_bp
 from src.routes.mood import mood_bp
 
-# Load environment variables
-load_dotenv()
+# Load environment variables from .env file
+def load_env_file():
+    env_path = os.path.join(os.path.dirname(__file__), '.env')
+    if os.path.exists(env_path):
+        with open(env_path, 'r', encoding='utf-8') as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith('#') and '=' in line:
+                    key, value = line.split('=', 1)
+                    os.environ[key.strip()] = value.strip()
+
+load_env_file()
 
 # Paths
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -67,11 +76,8 @@ def create_app(testing: bool = False, database_uri: str | None = None) -> Flask:
 
             # Inject API key as JavaScript variable
             api_key = os.getenv('GOOGLE_API_KEY')
-            print(f"DEBUG: api_key = {api_key}")
             if not api_key:
-                # Fallback to a placeholder if not set, but log warning
-                print("Warning: GOOGLE_API_KEY not found, using fallback")
-                api_key = 'fallback-key'
+                raise ValueError("GOOGLE_API_KEY environment variable is required. Please set it in your .env file.")
             content = content.replace(
                 "const API_KEY = window.API_KEY || 'fallback-key';",
                 f"const API_KEY = '{api_key}';"
@@ -83,7 +89,14 @@ def create_app(testing: bool = False, database_uri: str | None = None) -> Flask:
     return app
 
 
-# Development entry point
 if __name__ == '__main__':
+    import webbrowser
+
     app = create_app()
-    app.run(host='0.0.0.0', port=5000)
+
+    # Open the web interface automatically
+    webbrowser.open("http://127.0.0.1:5000")
+
+    # Start the Flask development server
+    print("Server running at: http://127.0.0.1:5000")
+    app.run(host='127.0.0.1', port=5000, debug=True)
