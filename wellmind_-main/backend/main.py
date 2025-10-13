@@ -1,9 +1,13 @@
 import os
+from dotenv import load_dotenv
 from flask import Flask, send_from_directory
 from flask_cors import CORS
 from src.extensions import db
 from src.routes.user import user_bp
 from src.routes.mood import mood_bp
+
+# Load environment variables
+load_dotenv()
 
 # Paths
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -63,8 +67,11 @@ def create_app(testing: bool = False, database_uri: str | None = None) -> Flask:
 
             # Inject API key as JavaScript variable
             api_key = os.getenv('GOOGLE_API_KEY')
+            print(f"DEBUG: api_key = {api_key}")
             if not api_key:
-                raise ValueError("GOOGLE_API_KEY environment variable is required")
+                # Fallback to a placeholder if not set, but log warning
+                print("Warning: GOOGLE_API_KEY not found, using fallback")
+                api_key = 'fallback-key'
             content = content.replace(
                 "const API_KEY = window.API_KEY || 'fallback-key';",
                 f"const API_KEY = '{api_key}';"
