@@ -35,6 +35,9 @@ def create_app(testing: bool = False, database_uri: str | None = None) -> Flask:
         database_uri: Optional explicit database URI. If not provided,
                       defaults to SQLite file under database folder.
     """
+    # Load environment variables FIRST
+    load_env_file()
+
     app = Flask(__name__, static_folder=DIST_PATH, template_folder=DIST_PATH)
     app.config['SECRET_KEY'] = 'change-me-in-prod'
 
