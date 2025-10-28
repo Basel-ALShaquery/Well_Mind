@@ -295,7 +295,7 @@ const realTests = [
     duration: '5-7 minutes',
     questions: 12,
     category: 'Sleep',
-    url: 'https://www.sleepfoundation.org/how-sleep-works/sleep-quality-assessment'
+    url: 'https://www.psychdb.com/_media/sleep/2-insomnia-disorder/the_pittsburgh_sleep_quality_index_psqi.pdf'
   }
 ]
 
